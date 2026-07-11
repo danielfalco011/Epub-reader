@@ -2361,13 +2361,6 @@
     toolbar.style.left = (rect.left + rect.width / 2) + 'px';
     toolbar.style.top = Math.max(50, rect.top) + 'px';
     toolbar.classList.add('show');
-    // Ya guardamos el texto/offsets en pendingSelection, así que podemos
-    // colapsar la selección visual para que la barra nativa de Android
-    // (Copiar/Compartir/Buscar) se cierre antes y no compita con la nuestra.
-    requestAnimationFrame(() => {
-      const sel = window.getSelection();
-      if(sel) sel.removeAllRanges();
-    });
   }
   function handleSelectionEnd(){
     setTimeout(() => {
@@ -2384,6 +2377,10 @@
   }
   $('#content-wrap').addEventListener('mouseup', handleSelectionEnd);
   $('#content-wrap').addEventListener('touchend', handleSelectionEnd);
+  // En Android, tras el touchend el usuario puede seguir ajustando la
+  // selección arrastrando los "handles" nativos; escuchamos selectionchange
+  // para que nuestra toolbar se actualice también en ese momento.
+  document.addEventListener('selectionchange', handleSelectionEnd);
 
   // Bloquea el menú contextual nativo de Android/WebView (copiar/compartir/
   // buscar en la web) al mantener presionado sobre el texto, para que solo
