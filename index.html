@@ -60,6 +60,14 @@
   }
 
   *{box-sizing:border-box;}
+  /* Por defecto, nada es seleccionable ni dispara el callout nativo de Android
+     (botones, menús, barras...). Solo el texto del libro (#content-inner)
+     lo habilita explícitamente más abajo. */
+  html, body, button, .mono, footer.bar, #menu-root{
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+  }
   html,body{height:100%;}
   body{
     margin:0;
@@ -575,6 +583,11 @@
     padding:56px 26px 90px;
     font-size:var(--font-size);
     line-height:1.75;
+    /* Permite seleccionar texto (para nuestra toolbar propia) pero bloquea
+       el menú contextual nativo de Android/WebView (copiar/compartir/buscar) */
+    -webkit-touch-callout:none;
+    -webkit-user-select:text;
+    user-select:text;
   }
   #content-inner p{ margin:0 0 1.1em; }
   #content-inner h1, #content-inner h2, #content-inner h3{
@@ -2348,6 +2361,13 @@
     toolbar.style.left = (rect.left + rect.width / 2) + 'px';
     toolbar.style.top = Math.max(50, rect.top) + 'px';
     toolbar.classList.add('show');
+    // Ya guardamos el texto/offsets en pendingSelection, así que podemos
+    // colapsar la selección visual para que la barra nativa de Android
+    // (Copiar/Compartir/Buscar) se cierre antes y no compita con la nuestra.
+    requestAnimationFrame(() => {
+      const sel = window.getSelection();
+      if(sel) sel.removeAllRanges();
+    });
   }
   function handleSelectionEnd(){
     setTimeout(() => {
@@ -2364,6 +2384,11 @@
   }
   $('#content-wrap').addEventListener('mouseup', handleSelectionEnd);
   $('#content-wrap').addEventListener('touchend', handleSelectionEnd);
+
+  // Bloquea el menú contextual nativo de Android/WebView (copiar/compartir/
+  // buscar en la web) al mantener presionado sobre el texto, para que solo
+  // aparezca nuestra toolbar de subrayado.
+  $('#content-wrap').addEventListener('contextmenu', (e) => e.preventDefault());
 
   function overlapsExistingHighlight(start, end){
     if(!state.bookId) return false;
